@@ -1,17 +1,21 @@
+// Setup basic express server
 const express = require('express');
-const path = require('path');
 const session = require('express-session');
 const passport = require('passport');
 const flash = require('express-flash');
 const cookieParser = require('cookie-parser');
 const expressLayouts = require('express-ejs-layouts');
 const bodyParser = require('body-parser');
-
-const app = require('express')();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
+const app = express();
+const path = require('path');
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
 const port = process.env.PORT || 3000;
+var query = require('./config/query');
 
+server.listen(port, () => {
+    console.log('Server listening at port %d', port);
+});
 
 //Passport config
 require('./config/passport')(passport);
@@ -46,15 +50,90 @@ app.use('/user/', require('./routes/user'));
 app.use('/auth/', require('./routes/auth'));
 app.use('/', require('./routes/index'));
 
-const PORT = process.env.PORT || 8080;
+app.use(express.static(path.join(__dirname, 'public')));
+
+
+
+let numUsers = 0;
 
 io.on('connection', (socket) => {
-    socket.on('chat message', msg => {
-        io.emit('chat message', msg);
+    let addedUser = false;
+
+    // when the client emits 'new message', this listens and executes
+    socket.on('new message', (data) => {
+        // we tell the client to execute 'new message'
+        let queryValues2 = [];
+        query("INSERT INTO public.chat (username, message) values('" + socket.username + "', '" + data + "')", queryValues2, (err, rows) => {
+            socket.broadcast.emit('new message', {
+                username: socket.username,
+                message: data
+            });
+        });
+    });
+
+    // when the client emits 'add user', this listens and executes
+    socket.on('add user', (username) => {
+        if (addedUser) return;
+
+        // we store the username in the socket session for this client
+        socket.username = username;
+        ++numUsers;
+        addedUser = true;
+        let queryValues2 = [];
+        query("SELECT * FROM public.chat ORDER BY id", queryValues2, (err, rows) => {
+            socket.emit('login', {
+                numUsers: numUsers,
+                data: rows
+            });
+        });
+        // echo globally (all clients) that a person has connected
+        socket.broadcast.emit('user joined', {
+            username: socket.username,
+            numUsers: numUsers
+        });
+    });
+
+    // when the client emits 'typing', we broadcast it to others
+    socket.on('typing', () => {
+        socket.broadcast.emit('typing', {
+            username: socket.username
+        });
+    });
+
+    // when the client emits 'stop typing', we broadcast it to others
+    socket.on('stop typing', () => {
+        socket.broadcast.emit('stop typing', {
+            username: socket.username
+        });
+    });
+
+    // when the user disconnects.. perform this
+    socket.on('disconnect', () => {
+        if (addedUser) {
+            --numUsers;
+
+            // echo globally that this client has left
+            socket.broadcast.emit('user left', {
+                username: socket.username,
+                numUsers: numUsers
+            });
+        }
     });
 });
-http.listen(8080, () => {
-    console.log('listening on *:8080');
-});
+
+
+
+
+
+// const PORT = process.env.PORT || 8080;
+
+// io.on('connection', (socket) => {
+//     socket.on('chat message', msg => {
+//         io.emit('chat message', msg);
+//     });
+// });
+// http.listen(8080, () => {
+//     console.log('listening on *:8080');
+// });
 
 // app.listen(PORT, console.log(`Server started on port ${PORT}`));
