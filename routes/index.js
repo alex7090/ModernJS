@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
@@ -10,9 +9,8 @@ router.get('/test' , ensureAuthenticated, (req, res) => {
 
 });
 
-router.get('/' , (req, res) => {
-    res.render('chat');
-
+router.get('/' ,ensureAuthenticated, (req, res) => {
+    res.render('chat', {username: req.user.username});
 });
 
 module.exports = router;
