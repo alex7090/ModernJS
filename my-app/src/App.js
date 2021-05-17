@@ -8,9 +8,20 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import HomeIcon from '@material-ui/icons/Home';
 
+
+
+
 import { Chat } from "./components/chat/Chat.js";
-import { Login } from "./components/login/login.js";
-import { chatGrid } from "./components/grid/chatGrid";
+// import { Login } from "./components/login/login.js";
+import { chatGrid } from "./components/chatGrid";
+
+import Login from "./components/login.component";
+import Register from "./components/register.component";
+
+
+import AuthService from "./services/auth.service";
+
+
 import './App.css';
 import "./styles.css";
 
@@ -46,8 +57,36 @@ const useStyles = theme => ({
 });
 
 class App extends Component {
+
+  constructor(props) {
+    super(props);
+    this.logOut = this.logOut.bind(this);
+
+    this.state = {
+      showModeratorBoard: false,
+      showAdminBoard: false,
+      currentUser: undefined,
+    };
+  }
+
+  componentDidMount() {
+    const user = AuthService.getCurrentUser();
+  
+    if (user) {
+      this.setState({
+        currentUser: user
+      });
+    }
+  }
+
+  logOut() {
+    AuthService.logout();
+  }
+
+
   render() {
     const { classes } = this.props;
+    const { currentUser} = this.state;
     return (
       <div className="App">
         <div className="App-content">
@@ -66,14 +105,23 @@ class App extends Component {
           </Typography>
               <div className={classes.grow} />
               <div className={classes.sectionDesktop}>
-                <Button href="/login" color="inherit">Login</Button>
-                <Button color="inherit">Register</Button>
-                <Button color="inherit">Logout</Button>
+                {currentUser ? (
+                  <div className="navbar-nav ml-auto">
+                    <Button color="inherit">Profile</Button>
+                    <Button href="/login" onClick={this.logOut} color="inherit">Logout</Button>
+                  </div>
+                ) : (
+                  <div className="navbar-nav ml-auto">
+                    <Button href="/login" color="inherit">Login</Button>
+                    <Button href="/register" color="inherit">Register</Button>
+                  </div>
+                )}
               </div>
             </Toolbar>
           </AppBar>
           <Switch>
-            <Route path="/chat" component={Chat} />
+            <Route path="/register" component={Register} />
+            <Route path="/chat/:id" component={Chat} />
             <Route path="/login" component={Login} />
             <Route path="/" component={chatGrid} />
           </Switch>

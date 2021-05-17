@@ -1,6 +1,6 @@
 import React from "react";
-import CustomInput from "../CustomInput";
-import Button from "../Button";
+import CustomInput from "./CustomInput";
+import Button from "./Button";
 
 export class Login extends React.Component {
   state = {

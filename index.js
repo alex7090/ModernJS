@@ -125,107 +125,38 @@
 
 
 
-// // const PORT = process.env.PORT || 8080;
-
-// // io.on('connection', (socket) => {
-// //     socket.on('chat message', msg => {
-// //         io.emit('chat message', msg);
-// //     });
-// // });
-// // http.listen(8080, () => {
-// //     console.log('listening on *:8080');
-// // });
-
-// // app.listen(PORT, console.log(`Server started on port ${PORT}`));
 
 
+const express = require('express');
+var cors = require('cors')
+const app = express();
+const bodyParser = require('body-parser');
 
+const msg = require("./utils/saveMessage.js");
 
-
-
-
-
-
-
-
-var app = require('express')();
+const cookieParser = require('cookie-parser');
 var http = require('http').createServer(app);
 const PORT = 8080;
+app.use(cors())
 var io = require('socket.io')(http, {
     cors: {
         origin: '*',
     }
 });
-var STATIC_CHANNELS = [{
-    name: 'Global chat',
-    participants: 0,
-    id: 1,
-    sockets: []
-}, {
-    name: 'Funny',
-    participants: 0,
-    id: 2,
-    sockets: []
-}];
 
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    next();
-})
-
+app.use(cookieParser());
+app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use('/user/', require('./routes/user'));
+app.use('/chat/', require('./routes/chat'));
 
 http.listen(PORT, () => {
     console.log(`listening on *:${PORT}`);
 });
 
-io.on('connection', (socket) => { // socket object may be used to send specific messages to the new connected client
-    console.log('new client connected');
-    socket.emit('connection', null);
-    socket.on('channel-join', id => {
-        console.log('channel join', id);
-        STATIC_CHANNELS.forEach(c => {
-            if (c.id === id) {
-                if (c.sockets.indexOf(socket.id) == (-1)) {
-                    c.sockets.push(socket.id);
-                    c.participants++;
-                    io.emit('channel', c);
-                }
-            } else {
-                let index = c.sockets.indexOf(socket.id);
-                if (index != (-1)) {
-                    c.sockets.splice(index, 1);
-                    c.participants--;
-                    io.emit('channel', c);
-                }
-            }
-        });
-
-        return id;
-    });
+io.on('connection', (socket) => {
     socket.on('send-message', message => {
+        msg.saveMessage(message);
         io.emit('message', message);
     });
-
-    socket.on('disconnect', () => {
-        STATIC_CHANNELS.forEach(c => {
-            let index = c.sockets.indexOf(socket.id);
-            if (index != (-1)) {
-                c.sockets.splice(index, 1);
-                c.participants--;
-                io.emit('channel', c);
-            }
-        });
-    });
-
-});
-
-
-
-/**
- * @description This methos retirves the static channels
- */
-app.get('/getChannels', (req, res) => {
-    res.json({
-        channels: STATIC_CHANNELS
-    })
 });
