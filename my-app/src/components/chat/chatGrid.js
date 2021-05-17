@@ -19,8 +19,8 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import Typography from '@material-ui/core/Typography';
 import SettingsIcon from '@material-ui/icons/Settings';
 
-import AuthService from "../services/auth.service";
-import ChatService from "../services/chat.service";
+import AuthService from "../../services/auth.service";
+import ChatService from "../../services/chat.service";
 
 
 export class chatGrid extends React.Component {

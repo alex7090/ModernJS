@@ -13,10 +13,10 @@ import HomeIcon from '@material-ui/icons/Home';
 
 import { Chat } from "./components/chat/Chat.js";
 // import { Login } from "./components/login/login.js";
-import { chatGrid } from "./components/chatGrid";
+import { chatGrid } from "./components/chat/chatGrid";
 
-import Login from "./components/login.component";
-import Register from "./components/register.component";
+import Login from "./components/auth/login.component";
+import Register from "./components/auth/register.component";
 
 
 import AuthService from "./services/auth.service";

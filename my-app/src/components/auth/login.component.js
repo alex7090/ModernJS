@@ -3,7 +3,7 @@ import Form from "react-validation/build/form";
 import Input from "react-validation/build/input";
 import CheckButton from "react-validation/build/button";
 
-import AuthService from "../services/auth.service";
+import AuthService from "../../services/auth.service";
 
 const required = value => {
   if (!value) {
@@ -60,14 +60,10 @@ export default class Login extends Component {
         },
         error => {
           const resMessage =
-            (error.response &&
-              error.response.data &&
-              error.response.data.message) ||
-            error.message ||
-            error.toString();
+          error.response.data.errors[0].msg;
 
           this.setState({
-            loading: false,
+            successful: false,
             message: resMessage
           });
         }
